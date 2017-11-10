@@ -7,7 +7,7 @@ while [[ $# -gt 0 ]]; do
       port="$3"
       echo "Waiting for $2:$3..."
       i="0"
-      while ! nc $2 $3; do
+      while ! nc -q0 $2 $3; do
         i=$((i+1))
         sleep 1
         if [ $i -ge 5 ]; then
