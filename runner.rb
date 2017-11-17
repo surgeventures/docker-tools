@@ -2,6 +2,7 @@
 
 require 'yaml'
 require 'socket'
+require 'timeout'
 
 class Runner
   class << self
@@ -44,11 +45,12 @@ class Runner
     def wait_for_port(value)
       host, port = value.split(":")
       puts "Waiting for port #{port} on host '#{host}'"
-      begin
-        Socket.tcp(host, port.to_i, connect_timeout: 30) { true }
-      rescue
-        puts "Failure waiting for port #{port} on host '#{host}'"
-        false
+
+      (1..30).find do
+        Socket.tcp(host, port.to_i, connect_timeout: 1) { true } rescue false
+        sleep 1
+      end.tap do |success|
+        puts "Failure waiting for port #{port} on host '#{host}'" unless success
       end
     end
 
