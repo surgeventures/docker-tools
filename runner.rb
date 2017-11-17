@@ -47,13 +47,16 @@ class Runner
       begin
         Socket.tcp(host, port.to_i, connect_timeout: 30) { true }
       rescue
+        puts "Failure waiting for port #{port} on host '#{host}'"
         false
       end
     end
 
     def run(cmd)
       puts "Running '#{cmd}'"
-      system(cmd)
+      system(cmd).tap do |success|
+        puts "Failure with status #{$?.exitstatus} from '#{cmd}'" unless success
+      end
     end
   end
 end
