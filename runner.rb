@@ -53,12 +53,7 @@ class Runner
 
     def run(cmd)
       puts "Running '#{cmd}'"
-      IO.popen(cmd) do |output|
-        output.each do |line|
-          puts line
-        end
-      end
-      $?.success?
+      system(cmd)
     end
   end
 end
