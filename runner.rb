@@ -29,6 +29,8 @@ class Runner
         all(value)
       when "run"
         run(value)
+      when "wait"
+        wait(value)
       when "wait_for_port"
         wait_for_port(value)
       else
@@ -40,6 +42,12 @@ class Runner
       steps.reject do |step|
         process_step(step)
       end.empty?
+    end
+
+    def wait(value)
+      secs = value.to_i
+      puts "Waiting #{secs} sec(s)"
+      sleep secs
     end
 
     def wait_for_port(value)
