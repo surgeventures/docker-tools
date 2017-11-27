@@ -3,6 +3,9 @@
 require 'yaml'
 require 'socket'
 require 'timeout'
+require 'pty'
+
+Termination = Class.new(Exception)
 
 class Runner
   class << self
@@ -64,11 +67,26 @@ class Runner
 
     def run(cmd)
       puts "Running '#{cmd}'"
-      system(cmd).tap do |success|
-        puts "Failure with status #{$?.exitstatus} from '#{cmd}'" unless success
+
+      PTY.spawn(cmd) do |stdout, _, pid|
+        begin
+          stdout.each { |line| print line }
+        rescue Termination
+          puts "Sending SIGTERM to #{pid}"
+          Process.kill("TERM", pid)
+          stdout.each { |line| print line }
+        end
       end
+
+      puts "Failure with status #{$?.exitstatus} from '#{cmd}'" unless $?.success?
+
+      $?.success?
     end
   end
+end
+
+Signal.trap("TERM") do
+  raise(Termination)
 end
 
 Runner.call
