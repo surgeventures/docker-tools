@@ -124,19 +124,32 @@ class Runner
     def run(cmd)
       puts "Running '#{cmd}'"
 
+      status = nil
       PTY.spawn(cmd) do |stdout, _, pid|
         begin
           stdout.each { |line| print line }
         rescue Termination
           puts "Sending SIGTERM to #{pid}"
+          status = :termination
           Process.kill("TERM", pid)
+          stdout.each { |line| print line }
+        rescue Interrupt
+          puts "Sending SIGINT to #{pid}"
+          status = :interrput
+          Process.kill("INT", pid)
           stdout.each { |line| print line }
         end
       end
 
-      puts "Failure with status #{$?.exitstatus} from '#{cmd}'" unless $?.success?
-
-      $?.success?
+      if status
+        puts "Failure with #{status} from '#{cmd}'"
+        false
+      elsif !$?.success?
+        puts "Failure with status #{$?.exitstatus} from '#{cmd}'"
+        false
+      else
+        true
+      end
     end
   end
 end
