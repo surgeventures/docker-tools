@@ -7,20 +7,25 @@ module Runner
         puts "Running '#{cmd}'"
 
         status = nil
+
         PTY.spawn(cmd) do |stdout, _, pid|
           begin
-            stdout.each { |line| print line }
+            print_output(stdout)
           rescue Termination
             puts "Sending SIGTERM to #{pid}"
             status = "Termination"
             Process.kill("TERM", pid)
-            stdout.each { |line| print line }
+            print_output(stdout)
           rescue Interrupt
             puts "Sending SIGINT to #{pid}"
             status = "Interrput"
             Process.kill("INT", pid)
-            stdout.each { |line| print line }
+            print_output(stdout)
+          rescue Errno::EIO
+            nil
           end
+
+          Process.wait(pid)
         end
 
         if status
@@ -32,6 +37,12 @@ module Runner
         else
           true
         end
+      end
+
+      private
+
+      def print_output(stdout)
+        stdout.each { |line| print line }
       end
     end
   end
