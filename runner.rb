@@ -2,8 +2,8 @@
 
 require 'yaml'
 require 'socket'
-require 'timeout'
 require 'pty'
+require 'uri'
 
 Termination = Class.new(Exception)
 
@@ -103,11 +103,14 @@ class Runner
       false
     end
 
-    def wait_for_postgres(connection_string)
-      user, dest = connection_string.split("@")
-      host, port = dest.split(":")
+    def wait_for_postgres(url)
+      uri = URI.parse("postgres://#{url}")
+      user = uri.user || "postgres"
+      host = uri.host
+      port = uri.port || 5432
+      final_url = "#{user}@#{host}:#{port}"
 
-      puts "Waiting for Postgres on #{dest}, user = #{user}"
+      puts "Waiting for Postgres on '#{final_url}'"
 
       30.times do
         return true if postgres_ready_for_query?(host, port, user)
@@ -115,7 +118,7 @@ class Runner
         sleep 1
       end
 
-      puts "Failure waiting for Postgres on #{dest}, user = #{user}"
+      puts "Failure waiting for Postgres on '#{final_url}'"
     end
 
     def run(cmd)
