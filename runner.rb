@@ -36,6 +36,8 @@ class Runner
         wait(value)
       when "wait_for_port"
         wait_for_port(value)
+      when "wait_for_postgres"
+        wait_for_postgres(value)
       else
         raise "unknown step: #{type.inspect}"
       end
@@ -63,6 +65,57 @@ class Runner
       end.tap do |success|
         puts "Failure waiting for port #{port} on host '#{host}'" unless success
       end
+    end
+
+    def postgres_ready_for_query?(host, port, user)
+      # Generate Startup packet:
+      # - packet size (Integer, 4 bytes)
+      # - version (Integer, 4 bytes)
+      # - name/value pairs (user is required)
+      # - null terminator
+      size = user.size + 15
+      startup_packet = [size, 196608, "user", user, 0].pack("L>L>Z*Z*C").freeze
+
+      # Generate ReadyForQuery packet:
+      # - message type ("Z", 1 byte)
+      # - packet size (5, 4 bytes)
+      # - transaction status (1 byte)
+      #   - "I" = Idle
+      #   - "T" = In transaction block
+      #   - "E" = In failed transaction block
+      ready_for_query_packet = [90, 5, 73].pack("CL>C").freeze
+
+      # Connect to Postgres and send Startup packet
+      socket = TCPSocket.new(host, port)
+      socket.write(startup_packet)
+
+      response = ""
+
+      # Wait for ReadyForQuery packet
+      while char = socket.getc
+        response << char
+
+        return true if response[-6..-1] == ready_for_query_packet
+      end
+
+      false
+    rescue Errno::ECONNREFUSED
+      false
+    end
+
+    def wait_for_postgres(connection_string)
+      user, dest = connection_string.split("@")
+      host, port = dest.split(":")
+
+      puts "Waiting for Postgres on #{dest}, user = #{user}"
+
+      30.times do
+        return true if postgres_ready_for_query?(host, port, user)
+
+        sleep 1
+      end
+
+      puts "Failure waiting for Postgres on #{dest}, user = #{user}"
     end
 
     def run(cmd)
