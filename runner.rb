@@ -5,6 +5,7 @@ require_relative './steps/run_step'
 require_relative './steps/wait_for_port_step'
 require_relative './steps/wait_for_postgres_step'
 require_relative './steps/wait_step'
+require_relative './steps/request_step'
 
 Termination = Class.new(Exception)
 
@@ -44,6 +45,8 @@ module Runner
           WaitForPortStep.call(value)
         when "wait_for_postgres"
           WaitForPostgresStep.call(value)
+        when "request"
+          RequestStep.call(value)
         else
           raise "unknown step: #{type.inspect}"
         end
