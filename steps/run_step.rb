@@ -10,6 +10,7 @@ module Runner
 
         PTY.spawn(cmd) do |stdout, _, pid|
           begin
+            puts "Printing output:"
             print_output(stdout)
           rescue Termination
             puts "Sending SIGTERM to #{pid}"
@@ -22,6 +23,7 @@ module Runner
             Process.kill("INT", pid)
             print_output(stdout)
           rescue Errno::EIO
+            puts "Errno::EIO"
             nil
           end
 
@@ -35,6 +37,7 @@ module Runner
           puts "Failure with status #{$?.exitstatus} from '#{cmd}'"
           false
         else
+          puts "Status is ok, continue"
           true
         end
       end
