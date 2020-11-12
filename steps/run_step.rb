@@ -4,7 +4,7 @@ module Runner
   class RunStep
     class << self
       def call(cmd)
-        $stdout.sync = true
+        STDOUT.sync = true
 
         puts "Running '#{cmd}'"
 
