@@ -4,6 +4,8 @@ module Runner
   class RunStep
     class << self
       def call(cmd)
+        STDOUT.sync = true
+
         puts "Running '#{cmd}'"
 
         status = nil
@@ -42,7 +44,7 @@ module Runner
       private
 
       def print_output(stdout)
-        stdout.each { |line| print line }
+        stdout.each_char { |char| putc char }
       end
     end
   end
