@@ -2,6 +2,7 @@
 
 require 'yaml'
 require_relative './steps/run_step'
+require_relative './steps/wait_for_amqp_step'
 require_relative './steps/wait_for_port_step'
 require_relative './steps/wait_for_postgres_step'
 require_relative './steps/wait_step'
@@ -41,6 +42,8 @@ module Runner
           RunStep.call(value)
         when "wait"
           WaitStep.call(value)
+        when "wait_for_amqp"
+          WaitForAmqpStep.call(value)
         when "wait_for_port"
           WaitForPortStep.call(value)
         when "wait_for_postgres"
